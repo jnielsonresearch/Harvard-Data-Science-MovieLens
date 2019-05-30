@@ -1,23 +1,28 @@
 #' ---
 #' title: 'HarvardX Data Science Capstone: MovieLens Report'
 #' author: "Justin Nielson"
-#' date: "May 29, 2019"
-#' output: 
-#'   pdf_document: 
+#' date: "May 30, 2019"
+#' output:
+#'   word_document:
 #'     toc: yes
-#'     highlight: zenburn
+#'   pdf_document:
 #'     latex_engine: xelatex
+#'     toc: yes
 #' ---
 #' 
 ## ----setup, include=FALSE------------------------------------------------
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
 
 #' 
 #' ## 1. Introduction 
 #' 
 #' The HarvardX Data Science Capstone MovieLens project is a movie recommendation system using machine learning algorithms made famous by the one million dollar Netflix competition launched on october 2006. 
 #' 
-#' At the end of the challenge in September 2009, Netflix awarded the Grand Prize to a developer team “BellKor’s Pragmatic Chaos” with a winning solution with a Root Mean Squared Error(RMSE) of about 0.857 that increased the accuracy of the company’s recommendation engine by 10%.
+#' At the end of the challenge in September 2009, Netflix awarded the Grand Prize to a developer team BellKor Pragmatic Chaoswith a winning solution with a Root Mean Squared Error(RMSE) of about 0.857 that increased the accuracy of the company's recommendation engine by 10%.
 #' 
 #' Using the 10M version of MovieLens data split into edx training set and 10% validation set, I used some of the machine learning techniques that went into the winning solution for the Netflix competition. The ML model used with the smallest RMSE was a multiple linear regression model using regularized movie and user effects at 0.8641362.
 #' 
@@ -38,8 +43,6 @@ library(data.table)
 library(lubridate)
 library(ggplot2)
 library(knitr)
-library(rmarkdown)
-library(tinytex)
 library(kableExtra)
 
 # MovieLens 10M data table:
@@ -83,7 +86,7 @@ rm(dl, ratings, movies, test_index, temp, movielens, removed)
 #' 
 #' *MovieLens edx dataset*
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 
 edx_head <- head(edx)
 
@@ -102,7 +105,7 @@ kable(edx_unique, "latex", booktabs = T,
 #' 
 #' *MovieLens validation dataset*
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 
 val_head <- head(validation)
 
@@ -138,7 +141,7 @@ kable(val_unique, "latex", booktabs = T,
 #' 
 #' ### * genres: genres associated with the movie separated by \
 #' 
-#' The variable or column “rating” is the outcome we want to predict, y.
+#' The variable or column rating is the outcome we want to predict, y.
 #' 
 #' ### * rating : a numeric rating between 0 and 5 for the movie in 0.5 increments.
 #' 
@@ -176,7 +179,7 @@ edx %>%
 #' Grouping user ratings by movie genre for the edx dataset, the genres of "Drama" and "Comedy"
 #' were the most popular with over three million user ratings followed by "Action" and "Thriller" with over 2 million user ratings. Documentary and IMAX genre movies were the least rated by users in the edx dataset. 
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 # Bar chart of user ratings by movie genre for the edx data table
 movie_genre <- edx %>% separate_rows(genres, sep = "\\|") %>%
   group_by(genres) %>%
@@ -198,7 +201,7 @@ ggplot(data=movie_genre, aes(x=reorder(movie_genre$genres,movie_genre$count),
 #' 
 #' Exploring whole and half star ratings for the edx dataset, the most popular rating is 4.0 with over two million user ratings followed by 3.0 and 5.0. Half star ratings in general are less popular than whole ratings as shown in the below histogram. 
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 # Histogram of movie ratings grouped by whole and half star ratings for the edx dataset
 group <-  ifelse((edx$rating == 1 |edx$rating == 2 | edx$rating == 3 | 
                     edx$rating == 4 | edx$rating == 5) ,
@@ -220,7 +223,7 @@ ggplot(edx_ratings, aes(x= edx$rating, fill = group)) +
 #' 
 #' Interestingly, movies released in the 1990's dominated the top 10 movies with all but the bottom two Star Wars: Episode IV - A New Hope (a.k.a Star Wars)(1977) and Batman (1989) not in that decade.
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 # Create top_movies dataframe from edx data table which contains 
 # the top 10 movies by number of user ratings
 
@@ -247,7 +250,7 @@ top_movies %>%
 #' modeling purposes.To perform this transformation we make a copies of edx dataset and
 #' renamed as training_set and validation dataset and rename as test_set.
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 training_set <- edx
 
 training_set$userId <- as.factor(training_set$userId)
@@ -257,7 +260,7 @@ training_set$movieId <- as.factor(training_set$movieId)
 #' I added a column to the training_set for date which is the month and year for the rating and
 #' set it as a factor.
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 
 training_set <- training_set %>%
   mutate(date = round_date(as_datetime(timestamp), unit = "month"))
@@ -269,7 +272,7 @@ training_set$date <- as.factor(training_set$date)
 #' Due to the large size of the edx dataset I selected the training_set columns with the quantitative dependent variables to by used in the linear regression modeling process 
 #' userId, movieId, date, and the predictive outcome variable y, rating.
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 
 training_set <- training_set %>% select(userId, movieId, date, rating)
 
@@ -277,7 +280,7 @@ training_set <- training_set %>% select(userId, movieId, date, rating)
 #' 
 #' I transformed the validation dataset the same as the training_set with columns userId, movieId, date, and rating as the test_set. 
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 
 test_set <- validation
 
@@ -301,14 +304,14 @@ test_set <- test_set %>% select(userId, movieId, date, rating)
 #' 
 #' The *baseline-naive model* is calculated as follows:
 #' 
-#' $$Y_{u,i} = \mu + \varepsilon_{u,i}$$
+#' $$Y = \mu + \varepsilon$$
 #' 
-#' #### * μ  is the “true” rating for all movies. 
-#' #### * ε (epsilon) are independent errors sampled from the same distribution centered at 0.
+#' #### * $(\mu)$  is the true rating for all movies. 
+#' #### * $(\varepsilon)$ are independent errors sampled from the same distribution centered at 0.
 #' 
 #' The resulting RMSE for the baseline model is 1.060054 which is a poor model and a marginally better predictive model than random guessing at 1.177464 RMSE. I will try to improve on this model using dependent variables movieId, userId, and date in linear regression models along with regularization methods. 
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 # Random guessing rating across all movies.
 random_guess <- rep(3, nrow(test_set))
 RMSE_random <- RMSE(test_set$rating, random_guess)
@@ -334,20 +337,20 @@ rmse_table %>% knitr::kable(caption = "RMSEs")
 #' I followed the same approach to build the linear regression models as the simplest recommendation systems described by professor Rafa Irizarry in the dsbook sourced 
 #' from the github page https://rafalab.github.io/dsbook/. 
 #' 
-#' The simple linear regression model that I will generate first uses the rating by movieId bias or the *movie effect* $b_i$ dependent variable on the training_set to predict the `rating` $(Y_{u,i}$ for the test_set. According to professor Irizarry, statistics textbooks refer to to the $b_s$ as effects. However, in the Netflix challenge papers, they refer to them as “bias”, thus the $b$ notation.
+#' The simple linear regression model that I will generate first uses the rating by movieId bias or the *movie effect* $b_i$ dependent variable on the training_set to predict the `rating` $(Y_{u,i}$ for the test_set. According to professor Irizarry, statistics textbooks refer to to the $b_s$ as effects. However, in the Netflix challenge papers, they refer to them as bias, thus the $b$ notation.
 #' 
 #' The *movie effect model* is calculated as follows:
 #' $$Y_{i} = \mu + b_i + \varepsilon_{i}$$
 #' where:
 #' 
-#' #### * μ is the “true” rating for all movies. 
-#' #### * bi effects or bias, movie-specific effect. 
-#' #### * ε (epsilon) are independent errors sampled from the same distribution centered at 0.
+#' #### * $(\mu)$  is the true rating for all movies.  
+#' #### * $(b_i)$  effects or bias, movie-specific effect. 
+#' #### * $(\varepsilon)$ are independent errors sampled from the same distribution centered at 0.
 #' 
 #' The resulting RMSE from this *movie effect model* on the test_set was an improvement
 #' on the baseline naive model RMSE at 0.9429615. We can likely do better with adding more dependent variables to the model. 
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 # Fitting Simple Regression Model to the edx training set.
 
 # The average of all movie ratings mu of the training_set.
@@ -380,14 +383,14 @@ rmse_table %>% knitr::kable(caption = "RMSEs")
 #' $$Y_{u,i} = \mu + b_i + b_u + \varepsilon_{u,i}$$
 #' where:
 #' 
-#' #### * μ is the “true” rating for all movies. 
-#' #### * bi effects or bias, movie-specific effect. 
-#' #### * bu effects or bias, user-specific effect. 
-#' #### * ε (epsilon) are independent errors sampled from the same distribution centered at 0.
+#' #### * $(\mu)$  is the true rating for all movies.  
+#' #### * $(b_i)$  effects or bias, movie-specific effect.
+#' #### * $(b_u)$ effects or bias, user-specific effect. 
+#' #### * $(\varepsilon)$ are independent errors sampled from the same distribution centered at 0. 
 #' 
 #' The resulting RMSE from this *movie-user effect model* on the test_set was an improvement on the *movie effect model* RMSE at 0.8646843. Let's see if we can do better with adding the last dependent variable date to the model. 
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 # Fitting Multiple Regression Models to the edx training set.
 
 # Predicted movie ratings regression model using both movieId and userId averages.
@@ -418,16 +421,16 @@ rmse_table %>% knitr::kable(caption = "RMSEs")
 #' $$Y_{i,u,d} = \mu + b_i + b_u + b_d + \varepsilon_{i,u,d}$$
 #' where:
 #' 
-#' #### * μ is the “true” rating for all movies. 
-#' #### * bi effects or bias, movie-specific effect. 
-#' #### * bu effects or bias, user-specific effect. 
-#' #### * bd effects or bias, date-specific effect.
-#' #### * ε (epsilon) are independent errors sampled from the same distribution centered at 0.
+#' #### * $(\mu)$  is the true rating for all movies.  
+#' #### * $(b_i)$  effects or bias, movie-specific effect.
+#' #### * $(b_u)$ effects or bias, user-specific effect. 
+#' #### * $(b_d)$ effects or bias, date-specific effect.
+#' #### * $(\varepsilon)$ are independent errors sampled from the same distribution centered at 0. 
 #' 
 #' The resulting RMSE from this *movie-user-date effect model* on the test_set was a neligible improvement on the *movie-user effect model* RMSE at 0.8646637. Next step is
 #' if regularization method improves the model RMSE. 
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 # Predicted movie ratings regression model using movieId, userId, and date averages.
 
 date_avgs <- training_set %>%
@@ -512,7 +515,7 @@ rmse_table %>% knitr::kable(caption = "RMSEs")
 #' More advanced ML algorithms with matrix factorization, dimension reduction, ensamble methods could improve upon the RMSE although computational resources were limited to my personal laptop. Also, there was limited time to research different analytic modeling techniques such as *random forest*,*decision tree*, *support vector machine*, *gbm*, *neural network*, *ensamble*, and others. The large size of the MovieLens dataset made most of the ML libraries unusable unless
 #' a smaller subset of the dataset was used which was not allowed for this particular project. 
 #' 
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 
 rmse_table %>% knitr::kable(caption = "RMSEs")
 

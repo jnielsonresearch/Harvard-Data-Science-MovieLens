@@ -1,12 +1,13 @@
 ---
 title: 'HarvardX Data Science Capstone: MovieLens Report'
 author: "Justin Nielson"
-date: "May 29, 2019"
-output: 
-  pdf_document: 
+date: "May 30, 2019"
+output:
+  word_document:
     toc: yes
-    highlight: zenburn
+  pdf_document:
     latex_engine: xelatex
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -21,7 +22,7 @@ knitr::opts_chunk$set(
 
 The HarvardX Data Science Capstone MovieLens project is a movie recommendation system using machine learning algorithms made famous by the one million dollar Netflix competition launched on october 2006. 
 
-At the end of the challenge in September 2009, Netflix awarded the Grand Prize to a developer team “BellKor’s Pragmatic Chaos” with a winning solution with a Root Mean Squared Error(RMSE) of about 0.857 that increased the accuracy of the company’s recommendation engine by 10%.
+At the end of the challenge in September 2009, Netflix awarded the Grand Prize to a developer team BellKor Pragmatic Chaoswith a winning solution with a Root Mean Squared Error(RMSE) of about 0.857 that increased the accuracy of the company's recommendation engine by 10%.
 
 Using the 10M version of MovieLens data split into edx training set and 10% validation set, I used some of the machine learning techniques that went into the winning solution for the Netflix competition. The ML model used with the smallest RMSE was a multiple linear regression model using regularized movie and user effects at 0.8641362.
 
@@ -140,7 +141,7 @@ Qualitative or non-numeric variables include the following:
 
 ### * genres: genres associated with the movie separated by \
 
-The variable or column “rating” is the outcome we want to predict, y.
+The variable or column rating is the outcome we want to predict, y.
 
 ### * rating : a numeric rating between 0 and 5 for the movie in 0.5 increments.
 
@@ -305,7 +306,7 @@ The *baseline-naive model* is calculated as follows:
 
 $$Y = \mu + \varepsilon$$
 
-#### * $(\mu)$  is the “true” rating for all movies. 
+#### * $(\mu)$  is the true rating for all movies. 
 #### * $(\varepsilon)$ are independent errors sampled from the same distribution centered at 0.
 
 The resulting RMSE for the baseline model is 1.060054 which is a poor model and a marginally better predictive model than random guessing at 1.177464 RMSE. I will try to improve on this model using dependent variables movieId, userId, and date in linear regression models along with regularization methods. 
@@ -336,13 +337,13 @@ rmse_table %>% knitr::kable(caption = "RMSEs")
 I followed the same approach to build the linear regression models as the simplest recommendation systems described by professor Rafa Irizarry in the dsbook sourced 
 from the github page https://rafalab.github.io/dsbook/. 
 
-The simple linear regression model that I will generate first uses the rating by movieId bias or the *movie effect* $b_i$ dependent variable on the training_set to predict the `rating` $(Y_{u,i}$ for the test_set. According to professor Irizarry, statistics textbooks refer to to the $b_s$ as effects. However, in the Netflix challenge papers, they refer to them as “bias”, thus the $b$ notation.
+The simple linear regression model that I will generate first uses the rating by movieId bias or the *movie effect* $b_i$ dependent variable on the training_set to predict the `rating` $(Y_{u,i}$ for the test_set. According to professor Irizarry, statistics textbooks refer to to the $b_s$ as effects. However, in the Netflix challenge papers, they refer to them as bias, thus the $b$ notation.
 
 The *movie effect model* is calculated as follows:
 $$Y_{i} = \mu + b_i + \varepsilon_{i}$$
 where:
 
-#### * $(\mu)$  is the “true” rating for all movies.  
+#### * $(\mu)$  is the true rating for all movies.  
 #### * $(b_i)$  effects or bias, movie-specific effect. 
 #### * $(\varepsilon)$ are independent errors sampled from the same distribution centered at 0.
 
@@ -382,7 +383,7 @@ The *movie-user effect model* is calculated as follows:
 $$Y_{u,i} = \mu + b_i + b_u + \varepsilon_{u,i}$$
 where:
 
-#### * $(\mu)$  is the “true” rating for all movies.  
+#### * $(\mu)$  is the true rating for all movies.  
 #### * $(b_i)$  effects or bias, movie-specific effect.
 #### * $(b_u)$ effects or bias, user-specific effect. 
 #### * $(\varepsilon)$ are independent errors sampled from the same distribution centered at 0. 
@@ -420,7 +421,7 @@ The *movie-user-date effect model* is calculated as follows:
 $$Y_{i,u,d} = \mu + b_i + b_u + b_d + \varepsilon_{i,u,d}$$
 where:
 
-#### * $(\mu)$  is the “true” rating for all movies.  
+#### * $(\mu)$  is the true rating for all movies.  
 #### * $(b_i)$  effects or bias, movie-specific effect.
 #### * $(b_u)$ effects or bias, user-specific effect. 
 #### * $(b_d)$ effects or bias, date-specific effect.
